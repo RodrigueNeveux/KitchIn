@@ -1,13 +1,23 @@
 import { createRoot } from 'react-dom/client';
-import AppMinimal from './AppMinimal';
+
+// 1. Importez l'application complète
+import App from './App'; 
+
+// 2. Importez le Toaster (composant de notification)
+import { Toaster } from './components/ui/sonner'; 
+
 import './styles/globals.css';
 
 const rootElement = document.getElementById('root');
+
 if (!rootElement) throw new Error('Failed to find the root element');
 
-createRoot(rootElement).render(<AppMinimal />);
+// 3. Rendu de l'application complète et du Toaster
+createRoot(rootElement).render(
+  <>
+    <App />
+    <Toaster position="top-center" />
+  </>
+);
 
-// Pour revenir à l'app complète, remplacez AppMinimal par:
-// import App from './App';
-// import { Toaster } from './components/ui/sonner';
-// createRoot(rootElement).render(<><App /><Toaster position="top-center" /></>);
+// Supprimez ou commentez tout ce qui concerne AppMinimal
