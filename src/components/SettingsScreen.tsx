@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Switch } from './ui/switch';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { toast } from 'sonner@2.0.3';
+import { toast } from "sonner";
 
 interface SettingsScreenProps {
   user: any;

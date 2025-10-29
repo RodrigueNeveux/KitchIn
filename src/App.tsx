@@ -13,7 +13,7 @@ import type { Recipe } from './components/RecipesScreen';
 import { BottomNav } from './components/BottomNav';
 import { supabase } from './utils/supabase/client';
 import { apiClient } from './utils/api';
-import { toast } from 'sonner@2.0.3';
+import { toast } from "sonner";
 import { demoProducts, demoShoppingList } from './utils/demoData';
 
 interface Product {

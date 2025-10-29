@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { findRecipesByIngredients, isApiConfigured } from '../utils/spoonacularApi';
 import { frenchRecipes, translateRecipeTitle, translateCategory, translateIngredient } from '../utils/recipesData';
 import { translateText } from '../utils/translationApi';
-import { toast } from 'sonner@2.0.3';
+import { toast } from "sonner";
 
 export interface Recipe {
   id: string;

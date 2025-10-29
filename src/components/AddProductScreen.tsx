@@ -11,7 +11,7 @@ import {
 } from './ui/select';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { getProductByBarcode } from '../utils/api';
-import { toast } from 'sonner@2.0.3';
+import { toast } from "sonner";
 
 interface AddProductScreenProps {
   onBack: () => void;
