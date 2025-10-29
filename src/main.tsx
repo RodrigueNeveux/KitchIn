@@ -8,8 +8,7 @@ import App from './App';
 import { Toaster } from './components/ui/sonner'; 
 
 // CORRECTION DU CHEMIN CSS : Utilisation de l'alias '@/' pour une résolution fiable dans le build Vercel.
-import '@/styles/globals.css';
-
+import './index.css';
 const rootElement = document.getElementById('root');
 
 if (!rootElement) throw new Error('Failed to find the root element');
