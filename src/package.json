@@ -1,7 +1,7 @@
 {
   "name": "kitchin",
   "version": "1.0.0",
-  "description": "Application mobile iOS pour la gestion de cuisine domestique",
+  "description": "Kitchen management mobile application",
   "type": "module",
   "scripts": {
     "dev": "vite",

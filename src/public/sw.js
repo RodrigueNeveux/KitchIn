@@ -1,4 +1,3 @@
-// Service Worker pour Kitch'In PWA
 const CACHE_NAME = 'kitchin-v1';
 const urlsToCache = [
   '/',
@@ -6,7 +5,6 @@ const urlsToCache = [
   '/manifest.json',
 ];
 
-// Installation du Service Worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -16,7 +14,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activation du Service Worker
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -31,12 +28,10 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Intercepter les requêtes réseau
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Retourner la version en cache si disponible, sinon faire la requête
         return response || fetch(event.request);
       })
   );

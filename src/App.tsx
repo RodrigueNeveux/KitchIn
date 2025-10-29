@@ -31,6 +31,14 @@ interface ShoppingItem {
   name: string;
   quantity: string;
   checked: boolean;
+  category?: string;
+  listId?: string; // Pour identifier à quelle liste appartient l'article
+}
+
+interface ShoppingLists {
+  main: ShoppingItem[];
+  'next-week': ShoppingItem[];
+  pharmacy: ShoppingItem[];
 }
 
 export default function App() {
@@ -41,13 +49,32 @@ export default function App() {
   const [household, setHousehold] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>(demoProducts);
-  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(
-    demoShoppingList.map(item => ({
-      ...item,
-      quantity: String(item.quantity),
-      checked: item.purchased,
-    }))
-  );
+  const [shoppingLists, setShoppingLists] = useState<ShoppingLists>({
+    main: demoShoppingList.filter(item => !item.listId || item.listId === 'main').map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      checked: item.checked,
+      category: item.category,
+      listId: 'main',
+    })),
+    'next-week': demoShoppingList.filter(item => item.listId === 'next-week').map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      checked: item.checked,
+      category: item.category,
+      listId: 'next-week',
+    })),
+    pharmacy: demoShoppingList.filter(item => item.listId === 'pharmacy').map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      checked: item.checked,
+      category: item.category,
+      listId: 'pharmacy',
+    })),
+  });
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -149,7 +176,8 @@ export default function App() {
 
       // Load shopping lists
       const listsData = await apiClient.getShoppingLists();
-      setShoppingItems(listsData.shoppingLists || []);
+      // TODO: Implement shopping lists loading from API
+      // setShoppingLists(listsData.shoppingLists || {});
     } catch (error: any) {
       console.error('Error loading user data:', error);
       // If unauthorized, logout the user
@@ -209,11 +237,32 @@ export default function App() {
     setHousehold(null);
     setMembers([]);
     setProducts(demoProducts);
-    setShoppingItems(demoShoppingList.map(item => ({
-      ...item,
-      quantity: String(item.quantity),
-      checked: item.purchased,
-    })));
+    setShoppingLists({
+      main: demoShoppingList.filter(item => !item.listId || item.listId === 'main').map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        checked: item.checked,
+        category: item.category,
+        listId: 'main',
+      })),
+      'next-week': demoShoppingList.filter(item => item.listId === 'next-week').map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        checked: item.checked,
+        category: item.category,
+        listId: 'next-week',
+      })),
+      pharmacy: demoShoppingList.filter(item => item.listId === 'pharmacy').map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        checked: item.checked,
+        category: item.category,
+        listId: 'pharmacy',
+      })),
+    });
     setActiveScreen('home');
     toast.success('Déconnexion réussie');
   };
@@ -287,40 +336,94 @@ export default function App() {
   };
 
   // Shopping list handlers
-  const handleToggleItem = async (id: string) => {
+  const handleToggleItem = async (listId: string, id: string) => {
     try {
       // MODE DÉMO : Mise à jour locale uniquement
-      setShoppingItems((prev) =>
-        prev.map((i) => i.id === id ? { ...i, checked: !i.checked } : i)
-      );
+      setShoppingLists((prev) => ({
+        ...prev,
+        [listId]: prev[listId as keyof ShoppingLists].map((i) => 
+          i.id === id ? { ...i, checked: !i.checked } : i
+        ),
+      }));
     } catch (error) {
       console.error('Error toggling shopping item:', error);
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
+  const handleDeleteItem = async (listId: string, id: string) => {
     try {
       // MODE DÉMO : Suppression locale uniquement
-      setShoppingItems((prev) => prev.filter((i) => i.id !== id));
+      setShoppingLists((prev) => ({
+        ...prev,
+        [listId]: prev[listId as keyof ShoppingLists].filter((i) => i.id !== id),
+      }));
       toast.success('Article supprimé');
     } catch (error) {
       console.error('Error deleting shopping item:', error);
     }
   };
 
-  const handleAddItem = async (name: string, quantity: string) => {
+  const handleAddItem = async (listId: string, name: string, quantity: string) => {
     try {
+      // Détection automatique de la catégorie
+      const detectCategory = (productName: string): string => {
+        const lowerName = productName.toLowerCase();
+        if (/(tomate|carotte|pomme|banane|orange|salade|légume|fruit|oignon|ail|pomme de terre|courgette|aubergine)/i.test(lowerName)) {
+          return 'fruits-legumes';
+        }
+        if (/(poulet|viande|porc|bœuf|poisson|saumon|thon|jambon|steak)/i.test(lowerName)) {
+          return 'viande-poisson';
+        }
+        if (/(lait|yaourt|fromage|beurre|crème|œuf)/i.test(lowerName)) {
+          return 'produits-laitiers';
+        }
+        if (/(eau|jus|soda|café|thé|coca)/i.test(lowerName)) {
+          return 'boissons';
+        }
+        if (/(surgelé|glace|légumes surgelés)/i.test(lowerName)) {
+          return 'surgeles';
+        }
+        if (/(pâtes|riz|farine|sucre|sel|huile|sauce|conserve|pain)/i.test(lowerName)) {
+          return 'epicerie';
+        }
+        return 'autres';
+      };
+      
       // MODE DÉMO : Ajout local uniquement
       const newItem = {
         id: `shop-demo-${Date.now()}`,
         name,
         quantity,
         checked: false,
+        category: detectCategory(name),
+        listId,
       };
-      setShoppingItems((prev) => [...prev, newItem]);
+      setShoppingLists((prev) => ({
+        ...prev,
+        [listId]: [...prev[listId as keyof ShoppingLists], newItem],
+      }));
       toast.success('Article ajouté');
     } catch (error) {
       console.error('Error adding shopping item:', error);
+    }
+  };
+
+  const handleMoveItem = async (itemId: string, fromListId: string, toListId: string) => {
+    try {
+      // Trouver l'article dans la liste source
+      const item = shoppingLists[fromListId as keyof ShoppingLists].find(i => i.id === itemId);
+      if (!item) return;
+
+      // Supprimer de la liste source et ajouter à la liste destination
+      setShoppingLists((prev) => ({
+        ...prev,
+        [fromListId]: prev[fromListId as keyof ShoppingLists].filter((i) => i.id !== itemId),
+        [toListId]: [...prev[toListId as keyof ShoppingLists], { ...item, listId: toListId }],
+      }));
+      
+      toast.success('Article déplacé');
+    } catch (error) {
+      console.error('Error moving shopping item:', error);
     }
   };
 
@@ -527,11 +630,12 @@ export default function App() {
       )}
       {activeScreen === 'lists' && (
         <ShoppingListScreen
-          items={shoppingItems}
+          lists={shoppingLists}
           onBack={() => setActiveScreen('home')}
           onToggleItem={handleToggleItem}
           onDeleteItem={handleDeleteItem}
           onAddItem={handleAddItem}
+          onMoveItem={handleMoveItem}
         />
       )}
       {activeScreen === 'profile' && (

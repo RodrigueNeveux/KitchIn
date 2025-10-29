@@ -1,0 +1,12 @@
+Instructions pour corriger recipesData.ts:
+
+Lignes 685-691 doivent être remplacées par:
+
+  sortedEntries.forEach(([eng, fr]) => {
+    translated = replaceWithWordBoundaries(translated, eng, fr);
+  });
+
+Le problème est à la ligne 687:
+const escapedEng = eng.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+
+Cette regex a une classe de caractères malformée.

@@ -1,7 +1,7 @@
 {
-  "name": "Kitch'In - Gestion de Cuisine",
-  "short_name": "Kitch'In",
-  "description": "Application de gestion d'inventaire alimentaire et de recettes",
+  "name": "KitchIn - Kitchen Management",
+  "short_name": "KitchIn",
+  "description": "Food inventory and recipe management application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
