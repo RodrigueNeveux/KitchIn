@@ -6,7 +6,8 @@ import App from './App';
 // 2. Importez le Toaster (composant de notification)
 import { Toaster } from './components/ui/sonner'; 
 
-import './styles/globals.css';
+// CORRECTION DU CHEMIN CSS : Utilisation de l'alias '@/' pour une résolution fiable dans le build Vercel.
+import '@/styles/globals.css';
 
 const rootElement = document.getElementById('root');
 
@@ -19,5 +20,3 @@ createRoot(rootElement).render(
     <Toaster position="top-center" />
   </>
 );
-
-// Supprimez ou commentez tout ce qui concerne AppMinimal
