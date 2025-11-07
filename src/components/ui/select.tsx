@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import * as SelectPrimitive from "@radix-ui/react-select";
+import * as SelectPrimitive from "@radix-ui/react-select@2.1.6";
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from "lucide-react";
+} from "lucide-react@0.487.0";
 
 import { cn } from "./utils";
 
@@ -28,11 +28,7 @@ function SelectValue({
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value 
     data-slot="select-value" 
-    style={{
-      color: '#111827',
-      WebkitTextFillColor: '#111827',
-      ...style
-    } as React.CSSProperties}
+    style={style}
     {...props} 
   />;
 }
@@ -40,6 +36,7 @@ function SelectValue({
 function SelectTrigger({
   className,
   size = "default",
+  style,
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
@@ -54,12 +51,11 @@ function SelectTrigger({
         className,
       )}
       style={{
-        color: '#111827',
-        WebkitTextFillColor: '#111827',
         fontSize: '16px',
         WebkitAppearance: 'none',
         appearance: 'none',
-        opacity: 1
+        opacity: 1,
+        ...style
       } as React.CSSProperties}
       {...props}
     >

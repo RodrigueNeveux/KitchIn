@@ -1,9 +1,18 @@
-import { ArrowLeft, Moon, Sun, Users, Mail, Edit2, Check } from 'lucide-react';
-import { useState } from 'react';
-import { Switch } from './ui/switch';
+import { ArrowLeft, Users, Mail, Edit2, Check, Bell, BellOff, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { toast } from "sonner";
+import { Switch } from './ui/switch';
+import { toast } from 'sonner@2.0.3';
+import { useThemeStyles } from '../contexts/ThemeContext';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  loadNotificationPreferences,
+  saveNotificationPreferences,
+  testNotification,
+  isNotificationSupported,
+} from '../utils/notifications';
 
 interface SettingsScreenProps {
   user: any;
@@ -11,8 +20,6 @@ interface SettingsScreenProps {
   onBack: () => void;
   onUpdateHouseholdName?: (name: string) => Promise<void>;
   onUpdateEmail?: (email: string) => Promise<void>;
-  darkMode: boolean;
-  onToggleDarkMode: () => void;
 }
 
 export function SettingsScreen({
@@ -21,14 +28,37 @@ export function SettingsScreen({
   onBack,
   onUpdateHouseholdName,
   onUpdateEmail,
-  darkMode,
-  onToggleDarkMode,
 }: SettingsScreenProps) {
   const [isEditingHousehold, setIsEditingHousehold] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [householdName, setHouseholdName] = useState(household?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<'default' | 'granted' | 'denied'>('default');
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    enabled: false,
+    dailyTime: 9,
+    instantAlerts: true,
+  });
+
+  useEffect(() => {
+    // Charger le statut de permission
+    const checkPermission = async () => {
+      const permission = getNotificationPermission();
+      if (permission.granted) {
+        setNotificationPermission('granted');
+      } else if (permission.denied) {
+        setNotificationPermission('denied');
+      } else {
+        setNotificationPermission('default');
+      }
+    };
+    checkPermission();
+
+    // Charger les préférences
+    const prefs = loadNotificationPreferences();
+    setNotificationPreferences(prefs);
+  }, []);
 
   const handleSaveHouseholdName = async () => {
     if (!householdName.trim()) {
@@ -76,12 +106,63 @@ export function SettingsScreen({
     }
   };
 
+  const handleToggleNotifications = async (enabled: boolean) => {
+    if (enabled && notificationPermission !== 'granted') {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        toast.error('Permission de notification refusée');
+        return;
+      }
+      setNotificationPermission('granted');
+    }
+    
+    const newPrefs = { ...notificationPreferences, enabled };
+    setNotificationPreferences(newPrefs);
+    saveNotificationPreferences(newPrefs);
+    toast.success(enabled ? 'Notifications activées' : 'Notifications désactivées');
+    
+    // Recharger la page pour appliquer les changements
+    if (enabled) {
+      window.location.reload();
+    }
+  };
 
+  const handleToggleInstantAlerts = async (enabled: boolean) => {
+    const newPrefs = { ...notificationPreferences, instantAlerts: enabled };
+    setNotificationPreferences(newPrefs);
+    saveNotificationPreferences(newPrefs);
+    toast.success(enabled ? 'Alertes instantanées activées' : 'Alertes instantanées désactivées');
+  };
+
+  const handleChangeDailyTime = async (time: number) => {
+    const newPrefs = { ...notificationPreferences, dailyTime: time };
+    setNotificationPreferences(newPrefs);
+    saveNotificationPreferences(newPrefs);
+    toast.success(`Rappel quotidien programmé à ${time}h`);
+  };
+
+  const handleTestNotification = async () => {
+    if (notificationPermission === 'granted') {
+      await testNotification();
+    } else {
+      toast.error('Permission de notification non accordée');
+    }
+  };
+
+  const requestPermission = async () => {
+    const permission = await requestNotificationPermission();
+    setNotificationPermission(permission);
+  };
+
+  const styles = useThemeStyles();
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col h-screen bg-gray-900" style={styles.background}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors">
+      <header 
+        className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors"
+        style={styles.header}
+      >
         <div className="flex items-center justify-between max-w-md mx-auto">
           <button
             onClick={onBack}
@@ -99,36 +180,12 @@ export function SettingsScreen({
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
         <div className="max-w-md mx-auto space-y-6">
-          {/* Appearance Section */}
-          <section className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
-            <h3 className="text-gray-900 dark:text-white mb-4">
-              Apparence
-            </h3>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {darkMode ? (
-                  <Moon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                ) : (
-                  <Sun className="w-5 h-5 text-amber-600" />
-                )}
-                <div>
-                  <p className="text-gray-900 dark:text-white">
-                    Mode sombre
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {darkMode ? 'Activé' : 'Désactivé'}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={darkMode}
-                onCheckedChange={onToggleDarkMode}
-              />
-            </div>
-          </section>
 
           {/* Household Section */}
-          <section className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
+          <section 
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors"
+            style={styles.card}
+          >
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
               <h3 className="text-gray-900 dark:text-white">
@@ -185,7 +242,10 @@ export function SettingsScreen({
           </section>
 
           {/* Account Section */}
-          <section className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
+          <section 
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors"
+            style={styles.card}
+          >
             <div className="flex items-center gap-2 mb-4">
               <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <h3 className="text-gray-900 dark:text-white">
@@ -241,8 +301,141 @@ export function SettingsScreen({
             </div>
           </section>
 
+          {/* Notifications Section */}
+          <section 
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors"
+            style={styles.card}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              {notificationPreferences.enabled ? (
+                <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              ) : (
+                <BellOff className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              )}
+              <h3 className="text-gray-900 dark:text-white">
+                Notifications Push
+              </h3>
+            </div>
+
+            {!isNotificationSupported() ? (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  ⚠️ Les notifications ne sont pas supportées sur cet appareil
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Permission Status */}
+                {notificationPermission === 'denied' && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      🚫 Permission refusée. Veuillez autoriser les notifications dans les paramètres de votre navigateur.
+                    </p>
+                  </div>
+                )}
+
+                {/* Enable/Disable Notifications */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div>
+                    <p className="text-gray-900 dark:text-white">
+                      Activer les notifications
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Recevoir des alertes sur vos produits
+                    </p>
+                  </div>
+                  <Switch
+                    checked={notificationPreferences.enabled}
+                    onCheckedChange={handleToggleNotifications}
+                    disabled={notificationPermission === 'denied'}
+                  />
+                </div>
+
+                {/* Instant Alerts */}
+                {notificationPreferences.enabled && (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                      <p className="text-gray-900 dark:text-white">
+                        Alertes instantanées
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Produits périmés aujourd'hui ou demain
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notificationPreferences.instantAlerts}
+                      onCheckedChange={handleToggleInstantAlerts}
+                    />
+                  </div>
+                )}
+
+                {/* Daily Time */}
+                {notificationPreferences.enabled && (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                      <Label className="text-gray-900 dark:text-white">
+                        Rappel quotidien
+                      </Label>
+                    </div>
+                    <select
+                      value={notificationPreferences.dailyTime}
+                      onChange={(e) => handleChangeDailyTime(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white rounded-lg"
+                    >
+                      <option value={7}>7h00 - Tôt le matin</option>
+                      <option value={8}>8h00 - Matin</option>
+                      <option value={9}>9h00 - Milieu de matinée</option>
+                      <option value={10}>10h00</option>
+                      <option value={11}>11h00</option>
+                      <option value={12}>12h00 - Midi</option>
+                      <option value={18}>18h00 - Début de soirée</option>
+                      <option value={19}>19h00 - Soirée</option>
+                      <option value={20}>20h00</option>
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Vous recevrez un résumé quotidien des produits à consommer
+                    </p>
+                  </div>
+                )}
+
+                {/* Test Notification */}
+                {notificationPermission === 'granted' && (
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <button
+                      onClick={handleTestNotification}
+                      className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Bell className="w-4 h-4" />
+                      <span>Tester une notification</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Request Permission Button */}
+                {notificationPermission === 'default' && !notificationPreferences.enabled && (
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <button
+                      onClick={requestPermission}
+                      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Bell className="w-4 h-4" />
+                      <span>Autoriser les notifications</span>
+                    </button>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                      Nécessaire pour recevoir des alertes
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
           {/* App Info */}
-          <section className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
+          <section 
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors"
+            style={styles.card}
+          >
             <h3 className="text-gray-900 dark:text-white mb-3">
               À propos
             </h3>

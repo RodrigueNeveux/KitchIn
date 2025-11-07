@@ -7,6 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './ui/dialog';
+import { useThemeStyles } from '../contexts/ThemeContext';
 
 interface ShoppingItem {
   id: string;
@@ -93,6 +101,7 @@ export function ShoppingListScreen({
   const [newItemName, setNewItemName] = useState('');
   const [newItemQuantity, setNewItemQuantity] = useState('1');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const listConfigs = [
     { id: 'main' as keyof ShoppingLists, label: '🛒 Principale', color: 'green' },
@@ -126,11 +135,17 @@ export function ShoppingListScreen({
       setNewItemName('');
       setNewItemQuantity('1');
       setShowSuggestions(false);
+      setShowAddDialog(false);
     }
   };
 
   const handleQuickAdd = (productName: string) => {
     handleAddItem(productName, '1');
+  };
+
+  const openAddDialog = () => {
+    setShowAddDialog(true);
+    setShowSuggestions(true);
   };
 
   const handleClearChecked = () => {
@@ -150,14 +165,19 @@ export function ShoppingListScreen({
     return { total: items.length, unchecked };
   };
 
+  const styles = useThemeStyles();
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col h-screen bg-gray-900" style={styles.background}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors">
-        <div className="flex items-center justify-between max-w-md mx-auto">
+      <header 
+        className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors"
+        style={styles.header}
+      >
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
           <button
             onClick={onBack}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="md:invisible p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
@@ -169,27 +189,14 @@ export function ShoppingListScreen({
               {uncheckedItems.length} articles à acheter
             </p>
           </div>
-          <button 
-            onClick={() => setShowSuggestions(!showSuggestions)}
-            className={`p-2 rounded-full transition-colors ${
-              showSuggestions 
-                ? 'bg-green-100 dark:bg-green-900/30' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <Sparkles className={`w-6 h-6 ${
-              showSuggestions 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-gray-600 dark:text-gray-300'
-            }`} />
-          </button>
+          <div className="w-10 md:invisible"></div>
         </div>
       </header>
 
       {/* Progress Bar */}
       {totalItems > 0 && (
         <div className="bg-white dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-md mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600 dark:text-gray-300">
                 Progression
@@ -210,7 +217,7 @@ export function ShoppingListScreen({
 
       {/* List Tabs */}
       <div className="bg-white dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 transition-colors">
-        <div className="flex gap-2 max-w-md mx-auto overflow-x-auto">
+        <div className="flex gap-2 max-w-6xl mx-auto overflow-x-auto">
           {listConfigs.map((list) => {
             const stats = getListStats(list.id);
             return (
@@ -246,32 +253,11 @@ export function ShoppingListScreen({
         </div>
       </div>
 
-      {/* Quick Add Suggestions */}
-      {showSuggestions && (
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 px-6 py-4 border-b border-green-200 dark:border-green-800">
-          <div className="max-w-md mx-auto">
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-green-600" />
-              Suggestions rapides
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_ADD_SUGGESTIONS.map((suggestion, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuickAdd(suggestion.name)}
-                  className="px-3 py-1.5 bg-white dark:bg-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors shadow-sm"
-                >
-                  + {suggestion.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Shopping Items List */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 pb-64">
-        <div className="max-w-md mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 md:pb-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Unchecked Items - Grouped by Category */}
           {Object.entries(itemsByCategory).map(([categoryKey, categoryItems]) => (
             <div key={categoryKey} className="space-y-2">
@@ -391,49 +377,104 @@ export function ShoppingListScreen({
         </div>
       </div>
 
-      {/* Add Item Section */}
-      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40 transition-colors">
-        <div className="max-w-md mx-auto">
-          <p className="text-sm mb-3 text-gray-600 dark:text-gray-300 flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Ajouter un article
-          </p>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              placeholder="Nom du produit"
-              value={newItemName}
-              onChange={(e) => setNewItemName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
-              onFocus={() => setShowSuggestions(true)}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-              style={{ 
-                fontSize: '16px',
-                minHeight: '48px'
-              } as React.CSSProperties}
-            />
-            <input
-              type="text"
-              placeholder="Qté"
-              value={newItemQuantity}
-              onChange={(e) => setNewItemQuantity(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
-              className="w-20 px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-              style={{ 
-                fontSize: '16px',
-                minHeight: '48px'
-              } as React.CSSProperties}
-            />
-            <button
-              onClick={() => handleAddItem()}
-              className="px-5 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors flex items-center justify-center shadow-md hover:shadow-lg"
-              style={{ minHeight: '48px', minWidth: '48px' }}
-            >
-              <Plus className="w-6 h-6" />
-            </button>
+      {/* Floating Add Button */}
+      <button 
+        onClick={openAddDialog}
+        className="fixed bottom-24 md:bottom-8 right-6 md:right-8 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-50"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Add Item Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 dark:text-white">
+              Ajouter un article
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-gray-400">
+              Ajoutez un nouvel article à votre liste "{listConfigs.find(l => l.id === activeList)?.label}"
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {/* Quick Add Suggestions */}
+            {showSuggestions && (
+              <div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-green-600" />
+                  Suggestions rapides
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_ADD_SUGGESTIONS.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleQuickAdd(suggestion.name)}
+                      className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+                    >
+                      + {suggestion.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Input */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-2 text-gray-700 dark:text-gray-300">
+                  Nom du produit
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Lait, Pain, Tomates..."
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm mb-2 text-gray-700 dark:text-gray-300">
+                  Quantité
+                </label>
+                <input
+                  type="text"
+                  placeholder="1"
+                  value={newItemQuantity}
+                  onChange={(e) => setNewItemQuantity(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setShowAddDialog(false);
+                  setNewItemName('');
+                  setNewItemQuantity('1');
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => handleAddItem()}
+                disabled={!newItemName.trim()}
+                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Ajouter
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

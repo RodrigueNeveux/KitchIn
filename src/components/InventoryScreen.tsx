@@ -1,6 +1,7 @@
 import { ArrowLeft, Search, Plus, Minus, Trash2, X } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
+import { useThemeStyles } from '../contexts/ThemeContext';
 
 interface Product {
   id: string;
@@ -57,14 +58,19 @@ export function InventoryScreen({
     return daysUntilExpiry !== undefined && daysUntilExpiry <= 3;
   };
 
+  const styles = useThemeStyles();
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col h-screen bg-gray-900" style={styles.background}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors">
-        <div className="flex items-center justify-between max-w-md mx-auto">
+      <header 
+        className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors"
+        style={styles.header}
+      >
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
           <button
             onClick={onBack}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="md:invisible p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
@@ -92,7 +98,7 @@ export function InventoryScreen({
       {/* Search Bar */}
       {showSearch && (
         <div className="bg-white dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 transition-colors">
-          <div className="max-w-md mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
@@ -118,7 +124,7 @@ export function InventoryScreen({
 
       {/* Category Filters */}
       <div className="bg-white dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 transition-colors">
-        <div className="flex gap-2 max-w-md mx-auto overflow-x-auto">
+        <div className="flex gap-2 max-w-6xl mx-auto overflow-x-auto">
           {categories.map((category) => (
             <button
               key={category.id}
@@ -136,8 +142,8 @@ export function InventoryScreen({
       </div>
 
       {/* Product List */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32">
-        <div className="max-w-md mx-auto space-y-3">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 md:pb-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 dark:text-gray-400">
@@ -227,14 +233,14 @@ export function InventoryScreen({
       {/* Floating Add Button */}
       <button 
         onClick={onAddProduct}
-        className="fixed bottom-24 right-6 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors"
+        className="fixed bottom-24 md:bottom-8 right-6 md:right-8 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-50"
       >
         <Plus className="w-6 h-6" />
       </button>
 
       {/* Quick Add Ingredients Button (only show if inventory is empty) */}
       {products.length === 0 && onAddSampleIngredients && (
-        <div className="fixed bottom-40 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="fixed bottom-40 md:bottom-24 left-1/2 transform -translate-x-1/2 z-10">
           <button
             onClick={onAddSampleIngredients}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-lg transition-colors flex items-center gap-2"

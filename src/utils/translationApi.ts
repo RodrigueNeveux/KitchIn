@@ -5,6 +5,7 @@
  */
 
 import { convertUnits } from './translationHelpers';
+import { translateWithDictionary, translateWordsInText, aggressiveTranslate } from './culinaryDictionary';
 
 // Cache des traductions pour éviter les appels répétés
 const translationCache = new Map<string, string>();
@@ -26,37 +27,62 @@ export async function translateText(text: string): Promise<string> {
     return text;
   }
 
+  // 1. Essayer d'abord avec le dictionnaire culinaire (exact match)
+  const dictionaryTranslation = translateWithDictionary(text);
+  if (dictionaryTranslation) {
+    translationCache.set(cacheKey, dictionaryTranslation);
+    console.log(`📖 Dictionnaire exact: "${text}" → "${dictionaryTranslation}"`);
+    return dictionaryTranslation;
+  }
+
+  // 2. Traduction agressive avec le dictionnaire (mot par mot)
+  const aggressiveTranslation = aggressiveTranslate(text);
+  
+  // Si la traduction agressive a changé au moins 30% du texte, l'utiliser directement
+  const changedRatio = aggressiveTranslation.length > 0 ? 
+    (text.length - aggressiveTranslation.length) / text.length : 0;
+  
+  if (Math.abs(changedRatio) > 0.3 || aggressiveTranslation !== text) {
+    console.log(`🔨 Traduction agressive: "${text}" → "${aggressiveTranslation}"`);
+    translationCache.set(cacheKey, aggressiveTranslation);
+    return aggressiveTranslation;
+  }
+  
+  // 3. En dernier recours, essayer l'API MyMemory (mais peu fiable)
   try {
-    // Encoder le texte pour l'URL
     const encodedText = encodeURIComponent(text);
-    
-    // Appeler l'API MyMemory (gratuite, pas de clé nécessaire)
     const url = `https://api.mymemory.translated.net/get?q=${encodedText}&langpair=en|fr`;
     
-    const response = await fetch(url);
+    const response = await fetch(url, { 
+      signal: AbortSignal.timeout(3000) // Timeout de 3 secondes
+    });
     
     if (!response.ok) {
-      console.warn('⚠️ Erreur API de traduction, utilisation du texte original');
-      return text;
+      console.warn('⚠️ Erreur API, utilisation de la traduction agressive');
+      translationCache.set(cacheKey, aggressiveTranslation);
+      return aggressiveTranslation;
     }
 
     const data = await response.json();
     
     if (data.responseStatus === 200 && data.responseData?.translatedText) {
-      const translated = data.responseData.translatedText;
+      const apiTranslation = data.responseData.translatedText;
       
-      // Mettre en cache
-      translationCache.set(cacheKey, translated);
+      // Post-traiter la traduction de l'API avec le dictionnaire
+      const finalTranslation = translateWordsInText(apiTranslation);
       
-      console.log(`✅ Traduit: "${text}" → "${translated}"`);
-      return translated;
+      translationCache.set(cacheKey, finalTranslation);
+      console.log(`✅ API + Post-traitement: "${text}" → "${finalTranslation}"`);
+      return finalTranslation;
     } else {
-      console.warn('⚠️ Réponse API invalide, utilisation du texte original');
-      return text;
+      console.warn('⚠️ Réponse API invalide, utilisation de la traduction agressive');
+      translationCache.set(cacheKey, aggressiveTranslation);
+      return aggressiveTranslation;
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la traduction:', error);
-    return text;
+    console.warn('⚠️ Erreur/Timeout API, utilisation de la traduction agressive:', error);
+    translationCache.set(cacheKey, aggressiveTranslation);
+    return aggressiveTranslation;
   }
 }
 

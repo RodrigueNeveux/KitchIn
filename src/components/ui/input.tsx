@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, style, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
@@ -14,12 +14,11 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         className,
       )}
       style={{ 
-        WebkitTextFillColor: '#111827',
-        color: '#111827',
         WebkitAppearance: 'none',
         appearance: 'none',
         opacity: 1,
-        WebkitOpacity: 1
+        WebkitOpacity: 1,
+        ...style
       } as React.CSSProperties}
       {...props}
     />

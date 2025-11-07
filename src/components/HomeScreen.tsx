@@ -1,5 +1,6 @@
 import { User, UserPlus, ChevronRight, Bell } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useThemeStyles } from '../contexts/ThemeContext';
 
 interface Product {
   id: string;
@@ -32,12 +33,16 @@ export function HomeScreen({
   onNotificationsClick
 }: HomeScreenProps) {
   const notificationCount = expiringProducts.length;
+  const styles = useThemeStyles();
   
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm transition-colors">
-        <div className="flex items-center justify-between max-w-md mx-auto">
+    <div className="flex flex-col h-screen bg-gray-900" style={styles.background}>
+      {/* Header - Mobile Only */}
+      <header 
+        className="md:hidden bg-white dark:bg-gray-800 px-6 py-4 shadow-sm transition-colors"
+        style={styles.header}
+      >
+        <div className="flex items-center justify-between">
           <button 
             onClick={onNotificationsClick}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
@@ -49,7 +54,7 @@ export function HomeScreen({
               </span>
             )}
           </button>
-          <h1 className="text-green-700 dark:text-green-400">Kitch'In</h1>
+          <h1 className="text-gray-900 dark:text-green-400">Kitch'In</h1>
           <button 
             onClick={onProfileClick}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -59,14 +64,40 @@ export function HomeScreen({
         </div>
       </header>
 
-      {/* Household Info Banner */}
-      <div className="bg-gradient-to-r from-green-100 to-green-50 dark:from-green-900 dark:to-green-800 px-6 py-4 mx-4 mt-4 rounded-xl shadow-sm transition-colors">
-        <div className="flex items-center justify-between max-w-md mx-auto">
+      {/* Desktop Header */}
+      <header 
+        className="hidden md:block bg-white dark:bg-gray-800 px-6 py-6 shadow-sm transition-colors"
+        style={styles.header}
+      >
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <h1 className="text-gray-900 dark:text-green-400">Tableau de bord</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Bienvenue dans votre cuisine
+            </p>
+          </div>
+          <button 
+            onClick={onNotificationsClick}
+            className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+          >
+            <Bell className={`w-6 h-6 text-gray-600 dark:text-gray-300 ${notificationCount > 0 ? 'bell-ring' : ''}`} />
+            {notificationCount > 0 && (
+              <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Household Info Banner */}
+      <div className="bg-gradient-to-r from-green-100 to-green-50 dark:from-green-900 dark:to-green-800 px-6 py-4 mx-4 mt-4 rounded-xl shadow-sm transition-colors md:max-w-4xl md:mx-auto">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-green-800 dark:text-gray-300">
               Mon foyer
             </p>
-            <h2 className="text-green-800 dark:text-green-100">
+            <h2 className="text-green-900 dark:text-green-100">
               {household?.name || 'Mon Foyer'}
             </h2>
           </div>
@@ -77,11 +108,11 @@ export function HomeScreen({
               console.log('Bouton Ajouter (HomeScreen) cliqué');
               onInviteClick();
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-green-600 rounded-lg text-sm text-green-700 dark:text-white hover:bg-green-50 dark:hover:bg-green-700 transition-colors shadow-sm dark:shadow-md relative z-10 cursor-pointer active:scale-95 transform"
+            className="flex items-center gap-1 px-3 py-2 bg-green-700 dark:bg-green-600 rounded-lg text-sm hover:bg-green-800 dark:hover:bg-green-700 transition-colors shadow-sm dark:shadow-md relative z-10 cursor-pointer active:scale-95 transform"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <UserPlus className="w-4 h-4" />
-            <span className="text-green-700 dark:text-white" style={{ color: 'inherit', WebkitTextFillColor: 'inherit' }}>
+            <UserPlus className="w-4 h-4 text-white" />
+            <span className="text-white">
               Ajouter
             </span>
           </button>
@@ -89,8 +120,8 @@ export function HomeScreen({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32">
-        <div className="max-w-md mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 md:pb-8">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* À Consommer Rapidement Section */}
           <section>
             <div className="flex items-center justify-between mb-3">
@@ -136,6 +167,7 @@ export function HomeScreen({
                   <div
                     key={product.id}
                     className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3 transition-colors"
+                    style={styles.card}
                   >
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                       {product.image ? (
@@ -196,6 +228,7 @@ export function HomeScreen({
                 <div
                   key={product.id}
                   className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center justify-between transition-colors"
+                  style={styles.card}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">

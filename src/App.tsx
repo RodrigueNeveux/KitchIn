@@ -9,12 +9,15 @@ import { AddProductScreen } from './components/AddProductScreen';
 import { RecipesScreen } from './components/RecipesScreen';
 import { RecipeDetailScreen } from './components/RecipeDetailScreen';
 import { NotificationsScreen } from './components/NotificationsScreen';
+import { ThemeProvider } from './contexts/ThemeContext';
 import type { Recipe } from './components/RecipesScreen';
-import { BottomNav } from './components/BottomNav';
+import { ResponsiveNav } from './components/ResponsiveNav';
+import { Toaster } from './components/ui/sonner';
 import { supabase } from './utils/supabase/client';
 import { apiClient } from './utils/api';
-import { toast } from "sonner";
+import { toast } from 'sonner@2.0.3';
 import { demoProducts, demoShoppingList } from './utils/demoData';
+import { initializeNotifications } from './utils/notifications';
 
 interface Product {
   id: string;
@@ -76,16 +79,52 @@ export default function App() {
     })),
   });
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  
+  // Initialize dark mode - TOUJOURS SOMBRE
+  const [darkMode] = useState(true);
 
   // Apply dark mode to document
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+      
+      // FORCER les styles inline pour override le navigateur
+      document.documentElement.style.backgroundColor = 'black';
+      document.documentElement.style.color = 'white';
+      document.documentElement.style.colorScheme = 'dark';
+      document.body.style.backgroundColor = 'black';
+      document.body.style.color = 'white';
+      
+      console.log('🌙 MODE SOMBRE ACTIVÉ - Fond: NOIR PUR (forcé avec !important)');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+      
+      // FORCER les styles inline pour override le navigateur
+      document.documentElement.style.backgroundColor = 'white';
+      document.documentElement.style.color = 'black';
+      document.documentElement.style.colorScheme = 'light';
+      document.body.style.backgroundColor = 'white';
+      document.body.style.color = 'black';
+      
+      console.log('☀️ MODE CLAIR ACTIVÉ - Fond: BLANC PUR (forcé avec !important)');
     }
   }, [darkMode]);
+
+  // Force initial light mode on first mount
+  useEffect(() => {
+    // S'assurer qu'on est bien en mode clair au démarrage si darkMode = false
+    if (!darkMode) {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      console.log('✅ Vérification: Mode clair confirmé au montage du composant');
+    } else {
+      console.log('⚠️ Attention: Mode sombre détecté au montage');
+    }
+  }, []);
 
   // Check for existing session on mount and listen to auth changes
   useEffect(() => {
@@ -116,8 +155,19 @@ export default function App() {
       // MODE DÉMO : Les données sont déjà chargées au démarrage
       // loadUserData();
       console.log('📦 Mode démo activé - utilisation des données locales');
+      
+      // Initialiser le système de notifications push
+      const init = async () => {
+        const notificationsInitialized = await initializeNotifications(products);
+        if (notificationsInitialized) {
+          console.log('✅ Système de notifications push initialisé');
+        } else {
+          console.log('ℹ️ Notifications push non activées');
+        }
+      };
+      init();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, products]);
 
   // Notification for expiring products - separate effect
   useEffect(() => {
@@ -570,10 +620,15 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div 
+        className="h-screen flex items-center justify-center bg-gray-900"
+        style={{ backgroundColor: '#1f2937', height: '100vh' }}
+      >
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
+          <p className="text-white">
+            Chargement...
+          </p>
         </div>
       </div>
     );
@@ -584,107 +639,126 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen w-full sm:max-w-md sm:mx-auto ${darkMode ? 'bg-gray-900' : 'bg-white'} relative sm:shadow-2xl`}>
+    <ThemeProvider>
+      <div 
+        className="min-h-screen w-full bg-gray-900 relative"
+        style={{
+          backgroundColor: '#1f2937',
+          color: '#f1f5f9',
+          minHeight: '100vh'
+        }}
+      >
       {/* Bannière Mode Démo */}
-      <div className="bg-blue-500 text-white text-center py-2 px-4 text-sm sticky top-0 z-50">
-        <span className="inline-flex items-center gap-2">
+      <div className="bg-blue-500 text-white text-center py-2 px-4 text-sm sticky top-0 z-50 md:ml-64">
+        <span className="inline-flex items-center gap-3">
           <span>📱</span>
           <span>Mode Démo - Données locales</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded-full">
+            🌙
+            <span className="text-xs">Mode Sombre</span>
+          </span>
         </span>
       </div>
       
-      {activeScreen === 'home' && (
-        <HomeScreen
-          expiringProducts={expiringProducts}
-          fridgeProducts={fridgeProducts}
-          household={household}
-          onProfileClick={() => setActiveScreen('profile')}
-          onInviteClick={() => setActiveScreen('profile')}
-          onViewAllExpiring={() => setActiveScreen('inventory')}
-          onViewAllFridge={() => setActiveScreen('inventory')}
-          onNotificationsClick={() => setActiveScreen('notifications')}
-        />
-      )}
-      {activeScreen === 'notifications' && (
-        <NotificationsScreen
-          products={products}
-          onBack={() => setActiveScreen('home')}
-          onNavigateToInventory={() => setActiveScreen('inventory')}
-        />
-      )}
-      {activeScreen === 'inventory' && (
-        <InventoryScreen
-          products={products}
-          onBack={() => setActiveScreen('home')}
-          onUpdateQuantity={handleUpdateQuantity}
-          onDeleteProduct={handleDeleteProduct}
-          onAddProduct={() => setActiveScreen('add-product')}
-          onAddSampleIngredients={handleAddSampleIngredients}
-        />
-      )}
-      {activeScreen === 'add-product' && (
-        <AddProductScreen
-          onBack={() => setActiveScreen('inventory')}
-          onSave={handleAddProduct}
-        />
-      )}
-      {activeScreen === 'lists' && (
-        <ShoppingListScreen
-          lists={shoppingLists}
-          onBack={() => setActiveScreen('home')}
-          onToggleItem={handleToggleItem}
-          onDeleteItem={handleDeleteItem}
-          onAddItem={handleAddItem}
-          onMoveItem={handleMoveItem}
-        />
-      )}
-      {activeScreen === 'profile' && (
-        <ProfileScreen
-          user={user}
-          household={household}
-          members={members}
-          onBack={() => setActiveScreen('home')}
-          onLogout={handleLogout}
-          onCreateInvite={handleCreateInvite}
-          onJoinHousehold={handleJoinHousehold}
-          onRemoveMember={handleRemoveMember}
-          onSettingsClick={() => setActiveScreen('settings')}
-        />
-      )}
-      {activeScreen === 'settings' && (
-        <SettingsScreen
-          user={user}
-          household={household}
-          onBack={() => setActiveScreen('profile')}
-          onUpdateHouseholdName={handleUpdateHouseholdName}
-          onUpdateEmail={handleUpdateEmail}
-          darkMode={darkMode}
-          onToggleDarkMode={() => setDarkMode(!darkMode)}
-        />
-      )}
-      {activeScreen === 'recipes' && !selectedRecipe && (
-        <RecipesScreen
-          onRecipeClick={(recipe) => setSelectedRecipe(recipe)}
-          availableProducts={products}
-        />
-      )}
-      {activeScreen === 'recipes' && selectedRecipe && (
-        <RecipeDetailScreen
-          recipe={selectedRecipe}
-          onBack={() => setSelectedRecipe(null)}
-          availableProducts={products}
-        />
-      )}
-      {activeScreen !== 'add-product' && activeScreen !== 'profile' && activeScreen !== 'settings' && activeScreen !== 'notifications' && !selectedRecipe && (
-        <BottomNav
-          activeScreen={activeScreen}
-          onNavigate={(screen) => {
-            setSelectedRecipe(null);
-            setActiveScreen(screen);
-          }}
-          notificationCount={expiringProducts.length}
-        />
-      )}
-    </div>
+      {/* Main Content Area */}
+      <div className="md:ml-64">
+        <div className="max-w-7xl mx-auto">
+          {activeScreen === 'home' && (
+            <HomeScreen
+              expiringProducts={expiringProducts}
+              fridgeProducts={fridgeProducts}
+              household={household}
+              onProfileClick={() => setActiveScreen('profile')}
+              onInviteClick={() => setActiveScreen('profile')}
+              onViewAllExpiring={() => setActiveScreen('inventory')}
+              onViewAllFridge={() => setActiveScreen('inventory')}
+              onNotificationsClick={() => setActiveScreen('notifications')}
+            />
+          )}
+          {activeScreen === 'notifications' && (
+            <NotificationsScreen
+              products={products}
+              onBack={() => setActiveScreen('home')}
+              onNavigateToInventory={() => setActiveScreen('inventory')}
+            />
+          )}
+          {activeScreen === 'inventory' && (
+            <InventoryScreen
+              products={products}
+              onBack={() => setActiveScreen('home')}
+              onUpdateQuantity={handleUpdateQuantity}
+              onDeleteProduct={handleDeleteProduct}
+              onAddProduct={() => setActiveScreen('add-product')}
+              onAddSampleIngredients={handleAddSampleIngredients}
+            />
+          )}
+          {activeScreen === 'add-product' && (
+            <AddProductScreen
+              onBack={() => setActiveScreen('inventory')}
+              onSave={handleAddProduct}
+            />
+          )}
+          {activeScreen === 'lists' && (
+            <ShoppingListScreen
+              lists={shoppingLists}
+              onBack={() => setActiveScreen('home')}
+              onToggleItem={handleToggleItem}
+              onDeleteItem={handleDeleteItem}
+              onAddItem={handleAddItem}
+              onMoveItem={handleMoveItem}
+            />
+          )}
+          {activeScreen === 'profile' && (
+            <ProfileScreen
+              user={user}
+              household={household}
+              members={members}
+              onBack={() => setActiveScreen('home')}
+              onLogout={handleLogout}
+              onCreateInvite={handleCreateInvite}
+              onJoinHousehold={handleJoinHousehold}
+              onRemoveMember={handleRemoveMember}
+              onSettingsClick={() => setActiveScreen('settings')}
+            />
+          )}
+          {activeScreen === 'settings' && (
+            <SettingsScreen
+              user={user}
+              household={household}
+              onBack={() => setActiveScreen('profile')}
+              onUpdateHouseholdName={handleUpdateHouseholdName}
+              onUpdateEmail={handleUpdateEmail}
+            />
+          )}
+          {activeScreen === 'recipes' && !selectedRecipe && (
+            <RecipesScreen
+              onRecipeClick={(recipe) => setSelectedRecipe(recipe)}
+              availableProducts={products}
+            />
+          )}
+          {activeScreen === 'recipes' && selectedRecipe && (
+            <RecipeDetailScreen
+              recipe={selectedRecipe}
+              onBack={() => setSelectedRecipe(null)}
+              availableProducts={products}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Responsive Navigation */}
+      <ResponsiveNav
+        activeScreen={activeScreen}
+        onNavigate={(screen) => {
+          setSelectedRecipe(null);
+          setActiveScreen(screen);
+        }}
+        notificationCount={expiringProducts.length}
+      />
+
+      {/* Toast Notifications */}
+      <Toaster position="top-center" theme="dark" />
+      </div>
+    </ThemeProvider>
   );
 }

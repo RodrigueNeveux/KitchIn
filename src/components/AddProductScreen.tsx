@@ -11,7 +11,8 @@ import {
 } from './ui/select';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { getProductByBarcode } from '../utils/api';
-import { toast } from "sonner";
+import { toast } from 'sonner@2.0.3';
+import { useThemeStyles } from '../contexts/ThemeContext';
 
 interface AddProductScreenProps {
   onBack: () => void;
@@ -111,18 +112,23 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
     }
   };
 
+  const styles = useThemeStyles();
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-900" style={styles.background}>
       {/* Header */}
-      <header className="bg-white px-6 py-4 shadow-sm flex-shrink-0">
+      <header 
+        className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors"
+        style={styles.header}
+      >
         <div className="flex items-center justify-between max-w-md mx-auto">
           <button
             onClick={onBack}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
+            <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
-          <h1 className="text-gray-900" style={{ color: '#111827', WebkitTextFillColor: '#111827' }}>
+          <h1 className="text-gray-900 dark:text-white">
             Ajouter un produit
           </h1>
           <div className="w-10" /> {/* Spacer */}
@@ -136,7 +142,7 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
           <button
             type="button"
             onClick={() => setIsScannerOpen(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Barcode className="w-5 h-5" />
             Scanner un code-barres
@@ -144,16 +150,16 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
 
           {/* Product Image */}
           <div className="flex flex-col items-center">
-            <div className="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center mb-3 overflow-hidden">
+            <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mb-3 overflow-hidden">
               {productImage ? (
                 <img src={productImage} alt={name} className="w-full h-full object-cover" />
               ) : (
-                <Camera className="w-12 h-12 text-gray-400" />
+                <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               )}
             </div>
             <button
               type="button"
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500"
             >
               Ajouter une photo
             </button>
@@ -161,33 +167,50 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
 
           {/* Product Name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Nom du produit *</Label>
+            <Label 
+              htmlFor="name" 
+              className="text-gray-700 dark:text-gray-300"
+              style={styles.textSecondary}
+            >
+              Nom du produit *
+            </Label>
             <Input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Yaourts nature, Tomates..."
-              className="bg-white"
+              className="bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              style={{
+                ...styles.input,
+                color: styles.input.color,
+                backgroundColor: styles.input.backgroundColor,
+              }}
               required
             />
           </div>
 
           {/* Quantity */}
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantité *</Label>
+            <Label 
+              htmlFor="quantity" 
+              className="text-gray-700 dark:text-gray-300"
+              style={styles.textSecondary}
+            >
+              Quantité *
+            </Label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setQuantity(String(Math.max(1, parseInt(quantity || '1') - 1)))}
-                className="w-12 h-12 bg-white border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors active:bg-gray-100"
+                className="w-12 h-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors active:bg-gray-100 dark:active:bg-gray-500 text-gray-700 dark:text-gray-200"
                 style={{ 
+                  ...styles.input,
                   fontSize: '24px',
                   lineHeight: '24px',
-                  color: '#374151',
-                  WebkitTextFillColor: '#374151',
                   minHeight: '48px',
-                  minWidth: '48px'
+                  minWidth: '48px',
+                  textAlign: 'center' as const
                 } as React.CSSProperties}
               >
                 −
@@ -202,32 +225,33 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
                   const val = e.target.value.replace(/[^0-9]/g, '');
                   setQuantity(val || '1');
                 }}
-                className="bg-white flex-1 force-text-visible"
+                className="bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 flex-1 force-text-visible"
                 style={{ 
-                  WebkitTextFillColor: '#111827', 
-                  color: '#111827',
-                  textAlign: 'center',
+                  ...styles.input,
+                  textAlign: 'center' as const,
                   fontSize: '18px',
                   fontWeight: '600',
                   WebkitAppearance: 'none',
                   appearance: 'none',
                   opacity: 1,
                   minHeight: '48px',
-                  lineHeight: '48px'
+                  lineHeight: '48px',
+                  color: styles.input.color,
+                  backgroundColor: styles.input.backgroundColor,
                 } as React.CSSProperties}
                 required
               />
               <button
                 type="button"
                 onClick={() => setQuantity(String(parseInt(quantity || '1') + 1))}
-                className="w-12 h-12 bg-white border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors active:bg-gray-100"
+                className="w-12 h-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors active:bg-gray-100 dark:active:bg-gray-500 text-gray-700 dark:text-gray-200"
                 style={{ 
+                  ...styles.input,
                   fontSize: '24px',
                   lineHeight: '24px',
-                  color: '#374151',
-                  WebkitTextFillColor: '#374151',
                   minHeight: '48px',
-                  minWidth: '48px'
+                  minWidth: '48px',
+                  textAlign: 'center' as const
                 } as React.CSSProperties}
               >
                 +
@@ -237,9 +261,22 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category">Emplacement *</Label>
+            <Label 
+              htmlFor="category" 
+              className="text-gray-700 dark:text-gray-300"
+              style={styles.textSecondary}
+            >
+              Emplacement *
+            </Label>
             <Select value={category} onValueChange={(value: any) => setCategory(value)}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger 
+                className="bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                style={{
+                  ...styles.input,
+                  color: styles.input.color,
+                  backgroundColor: styles.input.backgroundColor,
+                }}
+              >
                 <SelectValue placeholder="Sélectionner un emplacement" />
               </SelectTrigger>
               <SelectContent>
@@ -267,17 +304,32 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
 
           {/* Expiry Date */}
           <div className="space-y-2">
-            <Label htmlFor="expiryDate">Date de péremption (optionnel)</Label>
+            <Label 
+              htmlFor="expiryDate" 
+              className="text-gray-700 dark:text-gray-300"
+              style={styles.textSecondary}
+            >
+              Date de péremption (optionnel)
+            </Label>
             <Input
               id="expiryDate"
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
-              className="bg-white"
+              className="bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              style={{
+                ...styles.input,
+                color: styles.input.color,
+                backgroundColor: styles.input.backgroundColor,
+                colorScheme: 'dark',
+              }}
               min={new Date().toISOString().split('T')[0]}
             />
             {expiryDate && (
-              <p className="text-xs text-gray-500">
+              <p 
+                className="text-xs text-gray-500 dark:text-gray-400"
+                style={styles.textMuted}
+              >
                 Expire le {new Date(expiryDate).toLocaleDateString('fr-FR', {
                   day: 'numeric',
                   month: 'long',
@@ -289,7 +341,7 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm border border-red-200 dark:border-red-800">
               {error}
             </div>
           )}
@@ -298,7 +350,7 @@ export function AddProductScreen({ onBack, onSave }: AddProductScreenProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
             {loading ? 'Ajout en cours...' : 'Ajouter le produit'}

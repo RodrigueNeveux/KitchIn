@@ -1,12 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>KitchIn - Kitchen Management</title>
+    <title>Kitch'In - Gestion de cuisine</title>
+    <script>
+      // Initialize theme before React loads to prevent flash
+      (function() {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🎨 INITIALISATION DU THÈME KITCH\'IN');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // Clean up old theme keys
+        localStorage.removeItem('theme');
+        
+        // FORCER le mode clair au premier chargement
+        // Vérifier si c'est le premier chargement
+        const isFirstLoad = !localStorage.getItem('kitchin_initialized');
+        
+        if (isFirstLoad) {
+          console.log('🆕 PREMIER CHARGEMENT DÉTECTÉ');
+          console.log('➡️  Initialisation: MODE CLAIR (blanc)');
+          localStorage.setItem('darkMode', 'false');
+          localStorage.setItem('kitchin_initialized', 'true');
+          document.documentElement.classList.remove('dark');
+          console.log('✅ Classe "dark" retirée');
+        } else {
+          const savedMode = localStorage.getItem('darkMode');
+          console.log('📱 Chargement normal');
+          console.log('💾 localStorage.darkMode =', savedMode);
+          
+          // Par défaut : MODE CLAIR (blanc)
+          // On active le mode sombre UNIQUEMENT si explicitement demandé
+          if (savedMode === 'true') {
+            document.documentElement.classList.add('dark');
+            console.log('🌙 MODE SOMBRE appliqué (classe "dark" ajoutée)');
+          } else {
+            // Forcer le retrait de la classe dark pour être sûr
+            document.documentElement.classList.remove('dark');
+            console.log('☀️  MODE CLAIR appliqué (classe "dark" retirée)');
+            
+            // S'assurer que le localStorage est cohérent
+            localStorage.setItem('darkMode', 'false');
+          }
+        }
+        
+        console.log('🎯 État final: classe "dark" présente?', document.documentElement.classList.contains('dark'));
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        
+        // FORCER les styles inline pour override le thème du navigateur
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark) {
+          document.documentElement.style.backgroundColor = 'black';
+          document.documentElement.style.color = 'white';
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.style.backgroundColor = 'white';
+          document.documentElement.style.color = 'black';
+          document.documentElement.style.colorScheme = 'light';
+        }
+        console.log('🎨 Styles inline appliqués:', isDark ? 'NOIR' : 'BLANC');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

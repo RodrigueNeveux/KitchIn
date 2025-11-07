@@ -115,7 +115,7 @@ export function NotificationsScreen({ products, onBack, onNavigateToInventory }:
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col h-screen bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm flex-shrink-0 transition-colors">
         <div className="flex items-center justify-between max-w-md mx-auto">
